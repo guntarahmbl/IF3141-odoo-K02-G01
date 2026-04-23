@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="user_demo_spesialis" model="res.users">
+            <field name="name">Budi (Spesialis)</field>
+            <field name="login">spesialis@demo.com</field>
+            <field name="password">user123</field>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('manajemen_piutang.group_spesialis_pendapatan')])]"/>
+        </record>
+
+        <record id="user_demo_manajer" model="res.users">
+            <field name="name">Siti (Manajer)</field>
+            <field name="login">manajer@demo.com</field>
+            <field name="password">user123</field>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('manajemen_piutang.group_manajer_keuangan')])]"/>
+        </record>
+
+        <record id="user_demo_staff" model="res.users">
+            <field name="name">Joko (Staff Lapangan)</field>
+            <field name="login">staff@demo.com</field>
+            <field name="password">user123</field>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('manajemen_piutang.group_staff_penagihan')])]"/>
+        </record>
+
+        <record id="user_demo_direktur" model="res.users">
+            <field name="name">Pak Direktur</field>
+            <field name="login">direktur@demo.com</field>
+            <field name="password">user123</field>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('manajemen_piutang.group_direktur_utama')])]"/>
+        </record>
+
+        <record id="user_demo_admin" model="res.users">
+            <field name="name">Administrator</field>
+            <field name="login">admin@demo.com</field>
+            <field name="password">user123</field>
+            <field name="groups_id" eval="[(6, 0, [ref('base.group_user'), ref('manajemen_piutang.group_administrator_sistem')])]"/>
+        </record>
+
+        <record id="demo_konsumen_b2b" model="manajemen_piutang.konsumen">
+            <field name="nama_pelanggan">PT Sejahtera Bersama</field>
+            <field name="no_wa">6281234567890</field>
+            <field name="tipe_pelanggan">b2b</field>
+            <field name="alamat">Gedung Sudirman Lantai 4, Jakarta</field>
+        </record>
+
+        <record id="demo_konsumen_b2c" model="manajemen_piutang.konsumen">
+            <field name="nama_pelanggan">Andi Pratama</field>
+            <field name="no_wa">6289876543210</field>
+            <field name="tipe_pelanggan">b2c</field>
+            <field name="alamat">Jl. Merpati No. 12, Bandung</field>
+        </record>
+
+        <record id="demo_tagihan_1" model="manajemen_piutang.tagihan">
+            <field name="konsumen_id" ref="demo_konsumen_b2b"/>
+            <field name="total_tagihan">25000000</field>
+            <field name="rincian_item">Pengadaan Server 2 Unit</field>
+            <field name="tgl_terbit">2026-03-01</field>
+            <field name="tgl_jatuh_tempo">2026-03-31</field>
+            <field name="status_lunas">belum_lunas</field>
+            <field name="link_payment">https://app.midtrans.com/pay/INV-B2B-01</field>
+        </record>
+
+        <record id="demo_tagihan_2" model="manajemen_piutang.tagihan">
+            <field name="konsumen_id" ref="demo_konsumen_b2c"/>
+            <field name="total_tagihan">1500000</field>
+            <field name="rincian_item">Service Laptop &amp; Ganti SSD</field>
+            <field name="tgl_terbit">2026-04-05</field>
+            <field name="tgl_jatuh_tempo">2026-04-12</field>
+            <field name="status_lunas">lunas</field>
+        </record>
+
+        <record id="demo_pembayaran_1" model="manajemen_piutang.pembayaran">
+            <field name="id_transaksi">TRX-99812-MIDTRANS</field>
+            <field name="nominal_masuk">1500000</field>
+            <field name="tagihan_id" ref="demo_tagihan_2"/>
+            <field name="status_settlement">settlement</field>
+        </record>
+
+        <record id="demo_kunjungan_1" model="manajemen_piutang.kunjungan">
+            <field name="tagihan_id" ref="demo_tagihan_1"/>
+            <field name="nama_staf">Joko (Staff Lapangan)</field>
+            <field name="tgl_kunjungan">2026-04-15</field>
+            <field name="status_kunjungan">berhasil</field>
+            <field name="hasil_kunjungan">Bertemu perwakilan divisi keuangan</field>
+            <field name="catatan">Perusahaan sedang menunggu pencairan dana, janji akan dilunasi minggu depan.</field>
+        </record>
+
+    </data>
+</odoo>
