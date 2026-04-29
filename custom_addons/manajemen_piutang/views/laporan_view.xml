@@ -27,5 +27,6 @@
         <field name="name">Laporan Analitik Piutang</field>
         <field name="res_model">manajemen_piutang.tagihan</field>
         <field name="view_mode">pivot,graph,tree</field>
+        <field name="groups_id" eval="[(6, 0, [ref('manajemen_piutang.group_manajer_keuangan'), ref('manajemen_piutang.group_direktur_utama'), ref('manajemen_piutang.group_administrator_sistem')])]"/>
     </record>
 </odoo>

@@ -2,12 +2,14 @@
 <odoo>
     <menuitem id="menu_manajemen_piutang_root" 
               name="Manajemen Piutang" 
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_staff_penagihan,manajemen_piutang.group_direktur_utama,manajemen_piutang.group_administrator_sistem"
               sequence="10"/>
 
     <menuitem id="menu_piutang_tagihan" 
               name="Tagihan &amp; Dasbor" 
               parent="menu_manajemen_piutang_root" 
               action="action_manajemen_tagihan" 
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_administrator_sistem"
               sequence="10"/>
 
     <menuitem id="menu_piutang_konsumen" 
@@ -35,6 +37,6 @@
               name="Pengaturan Sistem" 
               parent="menu_manajemen_piutang_root" 
               action="action_manajemen_pengaturan" 
-              groups="manajemen_piutang.group_administrator_sistem,manajemen_piutang.group_manajer_keuangan"
+              groups="manajemen_piutang.group_administrator_sistem"
               sequence="90"/>
 </odoo>

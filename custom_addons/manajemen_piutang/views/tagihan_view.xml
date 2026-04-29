@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_manajemen_tagihan_search" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.search</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <search string="Cari Tagihan">
+                <field name="konsumen_id"/>
+                <field name="status_lunas"/>
+                <field name="kategori_aging"/>
+                <field name="tgl_terbit"/>
+                <field name="tgl_jatuh_tempo"/>
+                <separator/>
+                <filter name="f_outstanding" string="Outstanding" domain="[('status_lunas','=','belum_lunas')]"/>
+                <filter name="f_due_soon" string="Jatuh Tempo &lt;= 3 Hari" domain="[('kategori_aging','=','due_soon')]"/>
+                <filter name="f_overdue" string="Terlambat" domain="[('kategori_aging','in',['overdue_1_30','overdue_31_60','overdue_61_plus'])]"/>
+                <filter name="f_paid" string="Lunas" domain="[('status_lunas','=','lunas')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="g_konsumen" string="Konsumen" context="{'group_by': 'konsumen_id'}"/>
+                    <filter name="g_status" string="Status" context="{'group_by': 'status_lunas'}"/>
+                    <filter name="g_aging" string="Aging" context="{'group_by': 'kategori_aging'}"/>
+                    <filter name="g_jatuh_tempo" string="Jatuh Tempo" context="{'group_by': 'tgl_jatuh_tempo:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_manajemen_tagihan_kanban" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.kanban</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="kategori_aging" class="o_kanban_small_column">
+                <field name="konsumen_id"/>
+                <field name="total_tagihan"/>
+                <field name="sisa_tagihan"/>
+                <field name="jumlah_terbayar"/>
+                <field name="status_lunas"/>
+                <field name="hari_menuju_jatuh_tempo"/>
+                <field name="tgl_jatuh_tempo"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong><field name="konsumen_id"/></strong>
+                            </div>
+                            <div class="text-muted">Jatuh tempo: <field name="tgl_jatuh_tempo"/></div>
+                            <div class="mt8">Total: <field name="total_tagihan"/></div>
+                            <div>Sisa: <field name="sisa_tagihan"/></div>
+                            <div>Terbayar: <field name="jumlah_terbayar"/></div>
+                            <div class="mt8">
+                                <span class="badge bg-success" invisible="status_lunas != 'lunas'">LUNAS</span>
+                                <span class="badge bg-warning text-dark" invisible="status_lunas == 'lunas' or hari_menuju_jatuh_tempo &gt; 3 or hari_menuju_jatuh_tempo &lt; 0">JATUH TEMPO SEGERA</span>
+                                <span class="badge bg-danger" invisible="status_lunas == 'lunas' or hari_menuju_jatuh_tempo &gt;= 0">TERLAMBAT</span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="view_manajemen_tagihan_tree" model="ir.ui.view">
         <field name="name">manajemen.tagihan.tree</field>
         <field name="model">manajemen_piutang.tagihan</field>
@@ -9,8 +68,37 @@
                 <field name="tgl_terbit"/>
                 <field name="tgl_jatuh_tempo"/>
                 <field name="total_tagihan" sum="Total Piutang"/>
+                <field name="jumlah_terbayar" sum="Total Terbayar"/>
+                <field name="sisa_tagihan" sum="Total Outstanding"/>
+                <field name="hari_menuju_jatuh_tempo"/>
+                <field name="kategori_aging"/>
                 <field name="status_lunas" widget="badge" decoration-success="status_lunas == 'lunas'" decoration-danger="status_lunas == 'belum_lunas'"/>
             </tree>
+        </field>
+    </record>
+
+    <record id="view_manajemen_tagihan_graph_dashboard" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.graph.dashboard</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <graph string="Tren Piutang" type="bar" stacked="True">
+                <field name="tgl_terbit" interval="month"/>
+                <field name="kategori_aging"/>
+                <field name="sisa_tagihan" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_manajemen_tagihan_pivot_dashboard" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.pivot.dashboard</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <pivot string="Aging Piutang" display_quantity="true">
+                <field name="konsumen_id" type="row"/>
+                <field name="kategori_aging" type="col"/>
+                <field name="sisa_tagihan" type="measure"/>
+                <field name="total_tagihan" type="measure"/>
+            </pivot>
         </field>
     </record>
 
@@ -60,8 +148,11 @@
     </record>
 
     <record id="action_manajemen_tagihan" model="ir.actions.act_window">
-        <field name="name">Tagihan &amp; Piutang</field>
+        <field name="name">Tagihan Dashboard</field>
         <field name="res_model">manajemen_piutang.tagihan</field>
-        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_manajemen_tagihan_search"/>
+        <field name="view_mode">kanban,tree,graph,pivot,form</field>
+        <field name="context">{'search_default_f_outstanding': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('manajemen_piutang.group_spesialis_pendapatan'), ref('manajemen_piutang.group_manajer_keuangan'), ref('manajemen_piutang.group_administrator_sistem')])]"/>
     </record>
 </odoo>

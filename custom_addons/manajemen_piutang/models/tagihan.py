@@ -1,13 +1,12 @@
 from uuid import uuid4
 
-import requests
-
-from odoo import models, fields
+from odoo import api, models, fields
 from odoo.exceptions import UserError
 
 class Tagihan(models.Model):
     _name = 'manajemen_piutang.tagihan'
     _description = 'Data Tagihan & Piutang'
+    _order = 'tgl_jatuh_tempo asc, id desc'
 
 
     konsumen_id = fields.Many2one('manajemen_piutang.konsumen', string='Pelanggan', required=True, ondelete='restrict')
@@ -22,10 +21,67 @@ class Tagihan(models.Model):
         ('belum_lunas', 'Belum Lunas'),
         ('lunas', 'Lunas')
     ], string='Status Pembayaran', default='belum_lunas')
+
+    jumlah_terbayar = fields.Float(
+        string='Total Terbayar (Rp)',
+        compute='_compute_tagihan_metrics',
+        store=True,
+    )
+    sisa_tagihan = fields.Float(
+        string='Sisa Tagihan (Rp)',
+        compute='_compute_tagihan_metrics',
+        store=True,
+    )
+    hari_menuju_jatuh_tempo = fields.Integer(
+        string='Hari Menuju Jatuh Tempo',
+        compute='_compute_tagihan_metrics',
+        store=True,
+    )
+    kategori_aging = fields.Selection([
+        ('paid', 'Lunas'),
+        ('due_soon', 'Jatuh Tempo <= 3 Hari'),
+        ('current', 'Belum Jatuh Tempo'),
+        ('overdue_1_30', 'Terlambat 1-30 Hari'),
+        ('overdue_31_60', 'Terlambat 31-60 Hari'),
+        ('overdue_61_plus', 'Terlambat > 60 Hari'),
+    ], string='Kategori Aging', compute='_compute_tagihan_metrics', store=True, index=True)
     
     link_payment = fields.Char(string='Link Pembayaran (Gateway)')
     xendit_invoice_id = fields.Char(string='Xendit Invoice ID', readonly=True, copy=False)
     xendit_external_id = fields.Char(string='Xendit External ID', readonly=True, copy=False)
+
+    _sql_constraints = [
+        ('total_tagihan_positive', 'CHECK(total_tagihan > 0)', 'Total tagihan harus lebih besar dari 0.'),
+    ]
+
+    @api.depends('total_tagihan', 'tgl_jatuh_tempo', 'status_lunas', 'pembayaran_ids.nominal_masuk')
+    def _compute_tagihan_metrics(self):
+        today = fields.Date.context_today(self)
+        for record in self:
+            total_terbayar = sum(record.pembayaran_ids.mapped('nominal_masuk'))
+            record.jumlah_terbayar = total_terbayar
+            record.sisa_tagihan = max(float(record.total_tagihan or 0) - total_terbayar, 0)
+
+            if record.tgl_jatuh_tempo:
+                delta_days = (record.tgl_jatuh_tempo - today).days
+            else:
+                delta_days = 0
+            record.hari_menuju_jatuh_tempo = delta_days
+
+            if record.status_lunas == 'lunas':
+                record.kategori_aging = 'paid'
+            elif delta_days >= 0 and delta_days <= 3:
+                record.kategori_aging = 'due_soon'
+            elif delta_days > 3:
+                record.kategori_aging = 'current'
+            else:
+                keterlambatan = abs(delta_days)
+                if keterlambatan <= 30:
+                    record.kategori_aging = 'overdue_1_30'
+                elif keterlambatan <= 60:
+                    record.kategori_aging = 'overdue_31_60'
+                else:
+                    record.kategori_aging = 'overdue_61_plus'
 
     def generateInvoice(self):
         """Dipanggil saat tombol 'Kirim E-Invoice' di klik pada layar UI"""
@@ -36,6 +92,14 @@ class Tagihan(models.Model):
             raise UserError('Xendit Secret API Key belum diisi. Buka Settings > Manajemen Piutang untuk mengisi kredensial Xendit.')
 
         callback_base_url = params.get_param('web.base.url')
+
+        # Import requests lazily to avoid failing module import when the
+        # `requests` package is not available in the container environment.
+        try:
+            import requests
+        except Exception as exc:
+            raise UserError('The `requests` library is required for Xendit integration.\n'
+                            'Install it in the Odoo environment (e.g. pip install requests).') from exc
 
         for record in self:
             external_id = f"INV-{record.id}-{uuid4().hex[:8]}"

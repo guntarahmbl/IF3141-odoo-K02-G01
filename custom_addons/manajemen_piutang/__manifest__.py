@@ -18,9 +18,7 @@
         'views/menu.xml',
         'data/data_dummy.xml',
     ],
-    'demo': [
-        'demo/demo.xml',
-    ],
+    'demo': [],
     'qweb': [
 
 
