@@ -4,7 +4,7 @@
         <field name="name">manajemen.laporan.pivot</field>
         <field name="model">manajemen_piutang.tagihan</field>
         <field name="arch" type="xml">
-            <pivot string="Laporan Piutang &amp; Arus Kas" display_quantity="true">
+            <pivot string="Laporan Piutang &amp; Arus Kas" display_quantity="true" hide_zero="false">
                 <field name="konsumen_id" type="row"/>
                 <field name="tgl_terbit" type="col" interval="month"/>
                 <field name="total_tagihan" type="measure"/>
