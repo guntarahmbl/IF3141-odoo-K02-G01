@@ -7,7 +7,9 @@
             <tree string="Daftar Konsumen">
                 <field name="nama_pelanggan"/>
                 <field name="no_wa"/>
-                <field name="tipe_pelanggan"/>
+                <field name="tipe_pelanggan" widget="badge"
+                    decoration-info="tipe_pelanggan == 'b2b'"
+                    decoration-success="tipe_pelanggan == 'b2c'"/>
             </tree>
         </field>
     </record>
@@ -18,28 +20,41 @@
         <field name="arch" type="xml">
             <form string="Form Konsumen">
                 <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="nama_pelanggan" placeholder="Nama Pelanggan"/>
-                        </h1>
-                    </div>
                     <group>
                         <group>
-                            <field name="no_wa" placeholder="Contoh: +62812..."/>
-                            <field name="tipe_pelanggan"/>
+                            <field name="nama_pelanggan"/>
+                            <field name="no_wa"/>
                         </group>
                         <group>
+                            <field name="tipe_pelanggan"/>
                             <field name="alamat"/>
                         </group>
                     </group>
+                    <notebook>
+                        <page string="Riwayat Tagihan">
+                            <field name="tagihan_ids" readonly="1" options="{'no_open': True}">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="xendit_external_id"/>
+                                    <field name="total_tagihan"/>
+                                    <field name="tgl_terbit"/>
+                                    <field name="tgl_jatuh_tempo"/>
+                                    <field name="status_lunas" widget="badge"
+                                        decoration-success="status_lunas == 'lunas'"
+                                        decoration-danger="status_lunas == 'belum_lunas'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
     </record>
 
     <record id="action_manajemen_konsumen" model="ir.actions.act_window">
-        <field name="name">Konsumen</field>
+        <field name="name">Data Konsumen</field>
         <field name="res_model">manajemen_piutang.konsumen</field>
+        <field name="view_id" ref="view_manajemen_konsumen_tree"/>
         <field name="view_mode">tree,form</field>
+        <field name="views" eval="[(ref('view_manajemen_konsumen_tree'), 'tree'), (ref('view_manajemen_konsumen_form'), 'form')]"/>
     </record>
 </odoo>
