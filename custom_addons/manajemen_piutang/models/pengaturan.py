@@ -24,3 +24,8 @@ class ResConfigSettings(models.TransientModel):
         string='Xendit Callback Token',
         config_parameter='manajemen_piutang.xendit_webhook_token'
     )
+
+    wa_fonnte_token = fields.Char(
+        string='Fonnte API Token',
+        config_parameter='manajemen_piutang.wa_fonnte_token'
+    )

@@ -21,6 +21,7 @@
             <form string="Form Tagihan">
                 <header>
                     <button name="generateInvoice" string="Kirim E-Invoice" type="object" class="oe_highlight" invisible="status_lunas == 'lunas'"/>
+                    <button name="kirim_reminder_wa" string="Kirim Reminder WA" type="object" class="oe_highlight" invisible="status_lunas == 'lunas'"/>
                     <field name="status_lunas" widget="statusbar" statusbar_visible="belum_lunas,lunas"/>
                 </header>
                 <sheet>

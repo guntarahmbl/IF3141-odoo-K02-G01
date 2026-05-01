@@ -31,6 +31,13 @@
               groups="manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_direktur_utama" 
               sequence="40"/>
 
+    <menuitem id="menu_piutang_reminder_log"
+              name="Log Reminder WA"
+              parent="menu_manajemen_piutang_root"
+              action="action_reminder_log"
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan"
+              sequence="50"/>
+
     <menuitem id="menu_piutang_pengaturan" 
               name="Pengaturan Sistem" 
               parent="menu_manajemen_piutang_root" 

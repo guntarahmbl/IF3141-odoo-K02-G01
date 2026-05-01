@@ -20,6 +20,9 @@
                         <setting id="xendit_callback_token_setting" string="Xendit Callback Token" help="Samakan dengan nilai callback token pada dashboard Xendit untuk memvalidasi webhook.">
                             <field name="xendit_webhook_token" password="True"/>
                         </setting>
+                        <setting id="wa_fonnte_token_setting" string="Fonnte API Token" help="Token autentikasi Fonnte untuk pengiriman pesan WhatsApp otomatis. Dapatkan dari dashboard Fonnte.">
+                            <field name="wa_fonnte_token" password="True"/>
+                        </setting>
                     </block>
                 </app>
             </xpath>

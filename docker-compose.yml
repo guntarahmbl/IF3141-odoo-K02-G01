@@ -17,6 +17,7 @@ services:
       --db_port=5432 
       --db_user=odoo 
       --db_password=password 
+      --workers=2
       -i base
       --load-language=en_US
       --without-demo=all
