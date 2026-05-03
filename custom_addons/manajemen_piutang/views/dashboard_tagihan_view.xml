@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_dashboard_tagihan_kanban" model="ir.ui.view">
+        <field name="name">manajemen.dashboard.tagihan.kanban</field>
+        <field name="model">manajemen_piutang.dashboard_tagihan</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="display_value"/>
+                <field name="subtitle"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong class="o_kanban_record_title">
+                                    <field name="name"/>
+                                </strong>
+                            </div>
+                            <div class="mt8">
+                                <span class="fs-2 fw-bold">
+                                    <field name="display_value"/>
+                                </span>
+                            </div>
+                            <div class="text-muted mt4">
+                                <field name="subtitle"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_dashboard_tagihan_tree" model="ir.ui.view">
+        <field name="name">manajemen.dashboard.tagihan.tree</field>
+        <field name="model">manajemen_piutang.dashboard_tagihan</field>
+        <field name="arch" type="xml">
+            <tree string="KPI Dashboard Tagihan" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="display_value"/>
+                <field name="subtitle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_dashboard_tagihan" model="ir.actions.act_window">
+        <field name="name">Dashboard Tagihan</field>
+        <field name="res_model">manajemen_piutang.dashboard_tagihan</field>
+        <field name="view_mode">kanban,tree</field>
+    </record>
+
+    <record id="view_dashboard_penerimaan_graph" model="ir.ui.view">
+        <field name="name">manajemen.dashboard.penerimaan.graph</field>
+        <field name="model">manajemen_piutang.dashboard_penerimaan</field>
+        <field name="arch" type="xml">
+            <graph string="Tren Penerimaan Kas" type="line">
+                <field name="periode_bulan" interval="month"/>
+                <field name="nominal_masuk" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_dashboard_penerimaan_pivot" model="ir.ui.view">
+        <field name="name">manajemen.dashboard.penerimaan.pivot</field>
+        <field name="model">manajemen_piutang.dashboard_penerimaan</field>
+        <field name="arch" type="xml">
+            <pivot string="Ringkasan Penerimaan Kas">
+                <field name="periode_bulan" type="row" interval="month"/>
+                <field name="nominal_masuk" type="measure"/>
+                <field name="jumlah_transaksi" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_dashboard_penerimaan_tree" model="ir.ui.view">
+        <field name="name">manajemen.dashboard.penerimaan.tree</field>
+        <field name="model">manajemen_piutang.dashboard_penerimaan</field>
+        <field name="arch" type="xml">
+            <tree string="Tren Penerimaan Kas" create="false" edit="false" delete="false">
+                <field name="periode_bulan"/>
+                <field name="nominal_masuk" sum="Total Penerimaan"/>
+                <field name="jumlah_transaksi" sum="Total Transaksi"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_dashboard_penerimaan" model="ir.actions.act_window">
+        <field name="name">Tren Penerimaan Kas</field>
+        <field name="res_model">manajemen_piutang.dashboard_penerimaan</field>
+        <field name="view_mode">graph,pivot,tree</field>
+    </record>
+</odoo>

@@ -11,6 +11,7 @@
         'security/security_groups.xml', 
         'security/ir.model.access.csv',
         'data/wa_reminder_cron.xml',
+        'views/dashboard_tagihan_view.xml',
         'views/konsumen_view.xml',
         'views/tagihan_view.xml',
         'views/kunjungan_view.xml',

@@ -45,16 +45,24 @@ echo Stopping web container...
 echo Starting db container...
 %DC% up -d db || goto :error
 
+echo Waiting for db to be ready...
+:wait_db
+%DC% exec -T db pg_isready -U odoo >nul 2>nul
+if errorlevel 1 (
+	timeout /t 1 /nobreak >nul
+	goto :wait_db
+)
+
 echo Recreating database...
 %DC% exec -T db dropdb -U odoo --if-exists postgres || goto :error
 %DC% exec -T db createdb -U odoo postgres || goto :error
 
 echo Restoring database from: %IN_FILE%
-%DC% exec -T db pg_restore -U odoo -d postgres --no-owner --clean < "%IN_FILE%"
+%DC% exec -T db pg_restore -U odoo -d postgres --no-owner < "%IN_FILE%" || goto :error
 
 if exist "%FS_FILE%" (
 	echo Restoring filestore from: %FS_FILE%
-	%DC% run --rm -v odoo-web-data:/filestore alpine sh -c "rm -rf /filestore/* && tar xzf - -C /filestore" < "%FS_FILE%" || goto :error
+	%DC% run --rm -T -v odoo-web-data:/filestore alpine sh -c "rm -rf /filestore/* && tar xzf - -C /filestore" < "%FS_FILE%" || goto :error
 ) else (
 	echo Warning: No filestore backup found at %FS_FILE%, skipping.
 )

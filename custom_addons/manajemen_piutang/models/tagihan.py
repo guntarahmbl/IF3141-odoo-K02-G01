@@ -32,6 +32,43 @@ class Tagihan(models.Model):
     xendit_external_id = fields.Char(string='Xendit External ID', readonly=True, copy=False)
 
     is_eskalasi = fields.Boolean(string='Perlu Eskalasi', compute='_compute_eskalasi', store=True)
+    days_overdue = fields.Integer(string='Hari Terlambat', compute='_compute_dashboard_metrics', store=True)
+    aging_bucket = fields.Selection([
+        ('lunas', 'Lunas'),
+        ('belum_jatuh_tempo', 'Belum Jatuh Tempo'),
+        ('jatuh_tempo_hari_ini', 'Jatuh Tempo Hari Ini'),
+        ('terlambat_1_7', 'Terlambat 1-7 Hari'),
+        ('terlambat_8_30', 'Terlambat 8-30 Hari'),
+        ('terlambat_30_plus', 'Terlambat >30 Hari'),
+    ], string='Aging Piutang', compute='_compute_dashboard_metrics', store=True)
+
+    @api.depends('tgl_jatuh_tempo', 'status_lunas')
+    def _compute_dashboard_metrics(self):
+        today = date.today()
+        for rec in self:
+            if rec.status_lunas == 'lunas':
+                rec.days_overdue = 0
+                rec.aging_bucket = 'lunas'
+                continue
+
+            if not rec.tgl_jatuh_tempo:
+                rec.days_overdue = 0
+                rec.aging_bucket = 'belum_jatuh_tempo'
+                continue
+
+            days_overdue = (today - rec.tgl_jatuh_tempo).days
+            rec.days_overdue = max(days_overdue, 0)
+
+            if days_overdue < 0:
+                rec.aging_bucket = 'belum_jatuh_tempo'
+            elif days_overdue == 0:
+                rec.aging_bucket = 'jatuh_tempo_hari_ini'
+            elif days_overdue <= 7:
+                rec.aging_bucket = 'terlambat_1_7'
+            elif days_overdue <= 30:
+                rec.aging_bucket = 'terlambat_8_30'
+            else:
+                rec.aging_bucket = 'terlambat_30_plus'
 
     @api.depends('tgl_jatuh_tempo', 'status_lunas')
     def _compute_eskalasi(self):

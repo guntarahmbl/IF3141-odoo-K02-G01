@@ -9,8 +9,59 @@
                 <field name="tgl_terbit"/>
                 <field name="tgl_jatuh_tempo"/>
                 <field name="total_tagihan" sum="Total Piutang"/>
+                <field name="days_overdue"/>
+                <field name="aging_bucket" widget="badge"/>
                 <field name="status_lunas" widget="badge" decoration-success="status_lunas == 'lunas'" decoration-danger="status_lunas == 'belum_lunas'"/>
             </tree>
+        </field>
+    </record>
+
+    <record id="view_manajemen_tagihan_search" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.search</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <search string="Cari Tagihan">
+                <field name="konsumen_id"/>
+                <field name="status_lunas"/>
+                <field name="tgl_terbit"/>
+                <field name="tgl_jatuh_tempo"/>
+                <separator/>
+                <filter string="Belum Lunas" name="filter_belum_lunas" domain="[('status_lunas', '=', 'belum_lunas')]"/>
+                <filter string="Lunas" name="filter_lunas" domain="[('status_lunas', '=', 'lunas')]"/>
+                <filter string="Jatuh Tempo" name="filter_jatuh_tempo" domain="[('status_lunas', '=', 'belum_lunas'), ('tgl_jatuh_tempo', '&lt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Mendekati Jatuh Tempo" name="filter_due_soon" domain="[('status_lunas', '=', 'belum_lunas'), ('tgl_jatuh_tempo', '&gt;', context_today().strftime('%Y-%m-%d')), ('tgl_jatuh_tempo', '&lt;=', (context_today() + relativedelta(days=3)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Perlu Eskalasi" name="filter_eskalasi" domain="[('is_eskalasi', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_by_status" context="{'group_by': 'status_lunas'}"/>
+                    <filter string="Aging Piutang" name="group_by_aging" context="{'group_by': 'aging_bucket'}"/>
+                    <filter string="Pelanggan" name="group_by_konsumen" context="{'group_by': 'konsumen_id'}"/>
+                    <filter string="Bulan Terbit" name="group_by_tgl_terbit" context="{'group_by': 'tgl_terbit:month'}"/>
+                    <filter string="Bulan Jatuh Tempo" name="group_by_jatuh_tempo" context="{'group_by': 'tgl_jatuh_tempo:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_manajemen_tagihan_graph_status" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.graph.status</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <graph string="Dashboard Status Tagihan" type="bar">
+                <field name="status_lunas"/>
+                <field name="total_tagihan" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_manajemen_tagihan_pivot_dashboard" model="ir.ui.view">
+        <field name="name">manajemen.tagihan.pivot.dashboard</field>
+        <field name="model">manajemen_piutang.tagihan</field>
+        <field name="arch" type="xml">
+            <pivot string="Ringkasan Dashboard Tagihan" display_quantity="true">
+                <field name="aging_bucket" type="row"/>
+                <field name="status_lunas" type="col"/>
+                <field name="total_tagihan" type="measure"/>
+            </pivot>
         </field>
     </record>
 
@@ -63,6 +114,8 @@
     <record id="action_manajemen_tagihan" model="ir.actions.act_window">
         <field name="name">Tagihan &amp; Piutang</field>
         <field name="res_model">manajemen_piutang.tagihan</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">graph,pivot,tree,form</field>
+        <field name="search_view_id" ref="view_manajemen_tagihan_search"/>
+        <field name="context">{'search_default_group_by_status': 1}</field>
     </record>
 </odoo>

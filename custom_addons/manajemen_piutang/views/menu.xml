@@ -5,10 +5,50 @@
               sequence="10"/>
 
     <menuitem id="menu_piutang_tagihan" 
-              name="Tagihan &amp; Dasbor" 
+              name="Tagihan"
               parent="menu_manajemen_piutang_root" 
-              action="action_manajemen_tagihan" 
               sequence="10"/>
+
+    <record id="menu_piutang_tagihan" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
+
+    <menuitem id="menu_piutang_dashboard_tagihan"
+              name="Dashboard"
+              parent="menu_piutang_tagihan"
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_direktur_utama"
+              sequence="10"/>
+
+    <record id="menu_piutang_dashboard_tagihan" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
+
+    <menuitem id="menu_piutang_dashboard_ringkasan"
+              name="Ringkasan KPI"
+              parent="menu_piutang_dashboard_tagihan"
+              action="action_dashboard_tagihan"
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_direktur_utama"
+              sequence="10"/>
+
+    <menuitem id="menu_piutang_dashboard_penerimaan"
+              name="Tren Penerimaan Kas"
+              parent="menu_piutang_dashboard_tagihan"
+              action="action_dashboard_penerimaan"
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_direktur_utama"
+              sequence="20"/>
+
+    <menuitem id="menu_piutang_dashboard_analisis"
+              name="Analisis Tagihan"
+              parent="menu_piutang_dashboard_tagihan"
+              action="action_manajemen_tagihan"
+              groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_direktur_utama"
+              sequence="30"/>
+
+    <menuitem id="menu_piutang_daftar_tagihan"
+              name="Daftar Tagihan"
+              parent="menu_piutang_tagihan"
+              action="action_manajemen_tagihan"
+              sequence="20"/>
 
     <menuitem id="menu_piutang_konsumen" 
               name="Data Konsumen" 
