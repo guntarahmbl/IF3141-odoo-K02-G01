@@ -83,14 +83,20 @@ class Tagihan(models.Model):
 
     def generateInvoice(self):
         params = self.env['ir.config_parameter'].sudo()
-        secret_key = params.get_param('manajemen_piutang.xendit_secret_api_key')
+        secret_key = (params.get_param('manajemen_piutang.xendit_secret_api_key') or '').strip()
 
         if not secret_key:
             raise UserError('Xendit Secret API Key belum diisi. Buka Settings > Manajemen Piutang untuk mengisi kredensial Xendit.')
 
-        callback_base_url = params.get_param('web.base.url')
+        callback_base_url = (params.get_param('web.base.url') or '').rstrip('/')
+        processed_existing_invoice = False
 
         for record in self:
+            if record.xendit_invoice_id and record.link_payment:
+                processed_existing_invoice = True
+                record._send_invoice_wa_after_xendit_create()
+                continue
+
             external_id = f"INV-{record.id}-{uuid4().hex[:8]}"
             payload = {
                 'external_id': external_id,
@@ -101,6 +107,14 @@ class Tagihan(models.Model):
                 'success_redirect_url': f'{callback_base_url}/web',
             }
 
+            if record.konsumen_id:
+                customer = {
+                    'given_names': record.konsumen_id.nama_pelanggan,
+                }
+                if record.konsumen_id.no_wa and record._validate_no_wa(record.konsumen_id.no_wa):
+                    customer['mobile_number'] = f'+{record.konsumen_id.no_wa.lstrip("+")}'
+                payload['customer'] = customer
+
             try:
                 response = requests.post(
                     'https://api.xendit.co/v2/invoices',
@@ -108,18 +122,101 @@ class Tagihan(models.Model):
                     auth=(secret_key, ''),
                     timeout=15,
                 )
-                response.raise_for_status()
-                result = response.json()
+                try:
+                    result = response.json()
+                except ValueError:
+                    result = {}
             except requests.RequestException as exc:
                 raise UserError(f'Gagal membuat invoice Xendit: {exc}') from exc
 
-            record.link_payment = result.get('invoice_url')
-            record.xendit_invoice_id = result.get('id')
-            record.xendit_external_id = external_id
+            if not response.ok:
+                error_message = (
+                    result.get('message')
+                    or result.get('error_code')
+                    or response.text[:300]
+                    or response.reason
+                )
+                raise UserError(
+                    f'Gagal membuat invoice Xendit ({response.status_code}): {error_message}'
+                )
+
+            invoice_id = result.get('id')
+            invoice_url = result.get('invoice_url')
+
+            if not invoice_id or not invoice_url:
+                _logger.error(
+                    'Response Xendit tidak lengkap untuk tagihan %s. Keys: %s',
+                    record.id, ', '.join(sorted(result.keys())),
+                )
+                raise UserError(
+                    'Xendit berhasil merespons, tetapi response tidak berisi ID invoice atau link pembayaran.'
+                )
+
+            record.write({
+                'link_payment': invoice_url,
+                'xendit_invoice_id': invoice_id,
+                'xendit_external_id': result.get('external_id') or external_id,
+                'status_lunas': 'belum_lunas',
+            })
+            record._send_invoice_wa_after_xendit_create()
+
+        message = 'Link pembayaran Xendit berhasil dibuat dan data tagihan akan dimuat ulang.'
+        if processed_existing_invoice:
+            message = 'Tagihan sudah memiliki link Xendit. Data tagihan akan dimuat ulang.'
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'E-Invoice Dibuat',
+                'message': message,
+                'type': 'success',
+                'next': {
+                    'type': 'ir.actions.client',
+                    'tag': 'soft_reload',
+                },
+            },
+        }
             
     def reconcilePayment(self):
         for record in self:
             record.status_lunas = 'lunas'
+
+    def _send_invoice_wa_after_xendit_create(self) -> None:
+        self.ensure_one()
+        token = self.env['ir.config_parameter'].sudo().get_param(
+            'manajemen_piutang.wa_fonnte_token', ''
+        )
+
+        if not token:
+            self._buat_reminder_log(
+                self, 'invoice', '',
+                'gagal',
+                'Fonnte Token belum dikonfigurasi.',
+            )
+            _logger.warning('Invoice WA tidak dikirim untuk tagihan %s karena token Fonnte kosong', self.id)
+            return
+
+        no_wa = self.konsumen_id.no_wa or ''
+        if not self._validate_no_wa(no_wa):
+            self._buat_reminder_log(
+                self, 'invoice', '',
+                'gagal',
+                f'Format no_wa tidak valid: {no_wa}',
+            )
+            _logger.warning('Invoice WA tidak dikirim untuk tagihan %s karena no_wa tidak valid: %s', self.id, no_wa)
+            return
+
+        pesan = self._render_pesan(self, 0)
+        sukses, keterangan_error = self._send_via_wa(no_wa, pesan, token)
+        self._buat_reminder_log(
+            self, 'invoice', pesan,
+            'terkirim' if sukses else 'gagal',
+            keterangan_error,
+        )
+
+        if not sukses:
+            _logger.warning('Invoice WA gagal dikirim untuk tagihan %s: %s', self.id, keterangan_error)
 
     def _validate_no_wa(self, no_wa: str) -> bool:
         if not no_wa or not no_wa.isdigit():

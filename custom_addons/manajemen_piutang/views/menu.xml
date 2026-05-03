@@ -40,7 +40,7 @@
     <menuitem id="menu_piutang_dashboard_analisis"
               name="Analisis Tagihan"
               parent="menu_piutang_dashboard_tagihan"
-              action="action_manajemen_tagihan"
+              action="action_analisis_tagihan"
               groups="manajemen_piutang.group_spesialis_pendapatan,manajemen_piutang.group_manajer_keuangan,manajemen_piutang.group_direktur_utama"
               sequence="30"/>
 
